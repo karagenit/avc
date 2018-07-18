@@ -4,22 +4,33 @@
 #define MOTOR_C 4
 #define MOTOR_D 5
 
+// Direction pins
+#define DIR_A 6
+#define DIR_B 7
+#define DIR_C 8
+#define DIR_D 9
+
 // Connection timeout, ms
 #define TIMEOUT 1000
 
-// TODO: need direction control pins?
-
 void setup() {
-    // TODO: set pinMode output?
     Serial.begin(115200);
     Serial.setTimeout(TIMEOUT);
+
+    pinMode(MOTOR_A, OUTPUT);
+    pinMode(MOTOR_B, OUTPUT);
+    pinMode(MOTOR_C, OUTPUT);
+    pinMode(MOTOR_D, OUTPUT);
+
+    pinMode(DIR_A, OUTPUT);
+    pinMode(DIR_B, OUTPUT);
+    pinMode(DIR_C, OUTPUT);
+    pinMode(DIR_D, OUTPUT);
 }
 
 void loop() {
     signed byte motorValues[4];
 
-    // it may get mad about this being signed, so we might have to store
-    // as unsigned and cast to signed
     byte status = Serial.readBytes(motorValues, 4);
 
     if (status >= 4) {
@@ -29,12 +40,16 @@ void loop() {
     }
 }
 
-// TODO: set directions based on motorValues signs
 void setMotors(signed byte motorValues[4]) {
     analogWrite(MOTOR_A, mapValue(motorValues[0]));
     analogWrite(MOTOR_B, mapValue(motorValues[1]));
     analogWrite(MOTOR_C, mapValue(motorValues[2]));
     analogWrite(MOTOR_D, mapValue(motorValues[3]));
+
+    digitalWrite(DIR_A, motorValues[0] >= 0);
+    digitalWrite(DIR_B, motorValues[1] >= 0);
+    digitalWrite(DIR_C, motorValues[2] >= 0);
+    digitalWrite(DIR_D, motorValues[3] >= 0);
 }
 
 // TODO: error on -128?
