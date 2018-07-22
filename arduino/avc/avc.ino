@@ -1,63 +1,100 @@
-// PWM Ports
-#define MOTOR_A 2
-#define MOTOR_B 3
-#define MOTOR_C 4
-#define MOTOR_D 5
+#include <stdint.h>
 
-// Direction pins
-#define DIR_A 6
-#define DIR_B 7
-#define DIR_C 8
-#define DIR_D 9
+// PWM Ports
+#define MOTOR_A_FWD 3
+#define MOTOR_B_FWD 6
+#define MOTOR_C_FWD 8
+#define MOTOR_D_FWD 10
+
+#define MOTOR_A_REV 5
+#define MOTOR_B_REV 15
+#define MOTOR_C_REV 9
+#define MOTOR_D_REV 11
+
+// Enable pins - active low
+#define DISABLE_A 2
+#define DISABLE_B 4
+#define DISABLE_C 7
+#define DISABLE_D 14
 
 // Connection timeout, ms
-#define TIMEOUT 1000
+#define TIMEOUT 100000 // FIXME
 
 void setup() {
     Serial.begin(115200);
     Serial.setTimeout(TIMEOUT);
 
-    pinMode(MOTOR_A, OUTPUT);
-    pinMode(MOTOR_B, OUTPUT);
-    pinMode(MOTOR_C, OUTPUT);
-    pinMode(MOTOR_D, OUTPUT);
+    pinMode(MOTOR_A_FWD, OUTPUT);
+    pinMode(MOTOR_B_FWD, OUTPUT);
+    pinMode(MOTOR_C_FWD, OUTPUT);
+    pinMode(MOTOR_D_FWD, OUTPUT);
 
-    pinMode(DIR_A, OUTPUT);
-    pinMode(DIR_B, OUTPUT);
-    pinMode(DIR_C, OUTPUT);
-    pinMode(DIR_D, OUTPUT);
+    pinMode(MOTOR_A_REV, OUTPUT);
+    pinMode(MOTOR_B_REV, OUTPUT);
+    pinMode(MOTOR_C_REV, OUTPUT);
+    pinMode(MOTOR_D_REV, OUTPUT);
+
+    pinMode(DISABLE_A, OUTPUT);
+    pinMode(DISABLE_B, OUTPUT);
+    pinMode(DISABLE_C, OUTPUT);
+    pinMode(DISABLE_D, OUTPUT);
 }
 
 void loop() {
-    signed byte motorValues[4];
+    uint8_t motorValues[4];
 
-    byte status = Serial.readBytes(motorValues, 4);
+    uint8_t byteCount = Serial.readBytes(motorValues, 4);
 
-    if (status >= 4) {
-        setMotors(motorValues);
+    noInterrupts();
+    
+    if (byteCount == 4) {
+      clearMotors();
+      setMotors(motorValues);
+      enableMotors();
     } else {
-        stopMotors();
+      disableMotors();
     }
+
+    interrupts();
 }
 
-void setMotors(signed byte motorValues[4]) {
-    analogWrite(MOTOR_A, mapValue(motorValues[0]));
-    analogWrite(MOTOR_B, mapValue(motorValues[1]));
-    analogWrite(MOTOR_C, mapValue(motorValues[2]));
-    analogWrite(MOTOR_D, mapValue(motorValues[3]));
-
-    digitalWrite(DIR_A, motorValues[0] >= 0);
-    digitalWrite(DIR_B, motorValues[1] >= 0);
-    digitalWrite(DIR_C, motorValues[2] >= 0);
-    digitalWrite(DIR_D, motorValues[3] >= 0);
+void setMotors(uint8_t motorValues[4]) {
+  analogWrite(motorValues[0] > 127 ? MOTOR_A_FWD : MOTOR_A_REV, mapValue(motorValues[0]));
+  analogWrite(motorValues[1] > 127 ? MOTOR_B_FWD : MOTOR_B_REV, mapValue(motorValues[1]));
+  analogWrite(motorValues[2] > 127 ? MOTOR_C_FWD : MOTOR_C_REV, mapValue(motorValues[2]));
+  analogWrite(motorValues[3] > 127 ? MOTOR_D_FWD : MOTOR_D_REV, mapValue(motorValues[3]));
 }
 
-// TODO: error on -128?
-int mapValue(signed byte value) {
-    return map(abs(value), 0, 127, 0, 255);
+int mapValue(uint8_t value) {
+    return abs(map(value, 0, 255, -255, 255));
 }
 
-void stopMotors() {
-    signed byte zero = {0,0,0,0};
-    setMotors(zero);
+// Enables all motors
+void enableMotors() {
+  digitalWrite(DISABLE_A, LOW);
+  digitalWrite(DISABLE_B, LOW);
+  digitalWrite(DISABLE_C, LOW);
+  digitalWrite(DISABLE_D, LOW);
 }
+
+// Resets all PWM values to 0%
+void clearMotors() {
+  digitalWrite(MOTOR_A_FWD, LOW);
+  digitalWrite(MOTOR_B_FWD, LOW);
+  digitalWrite(MOTOR_C_FWD, LOW);
+  digitalWrite(MOTOR_D_FWD, LOW);
+
+  digitalWrite(MOTOR_A_REV, LOW);
+  digitalWrite(MOTOR_B_REV, LOW);
+  digitalWrite(MOTOR_C_REV, LOW);
+  digitalWrite(MOTOR_D_REV, LOW);
+}
+
+// Disables all motors
+void disableMotors() {
+  digitalWrite(DISABLE_A, HIGH);
+  digitalWrite(DISABLE_B, HIGH);
+  digitalWrite(DISABLE_C, HIGH);
+  digitalWrite(DISABLE_D, HIGH);
+}
+
