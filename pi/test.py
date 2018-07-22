@@ -1,15 +1,19 @@
 #!/usr/bin/env python3
 
+import sys
 import serial
+
+if (len(sys.argv) != 5):
+    exit()
 
 # TODO: port may change
 serialPort = serial.Serial("/dev/ttyUSB0", 115200);
 
-while True:
-    print("Enter motor values:")
-    serialPort.write(bytearray([int(input("Motor A: "))]))
-    serialPort.write(bytearray([int(input("Motor B: "))]))
-    serialPort.write(bytearray([int(input("Motor C: "))]))
-    serialPort.write(bytearray([int(input("Motor D: "))]))
+serialPort.write(bytearray([127 + int(sys.argv[1])]))
+serialPort.write(bytearray([127 + int(sys.argv[2])]))
+serialPort.write(bytearray([127 + int(sys.argv[3])]))
+serialPort.write(bytearray([127 + int(sys.argv[4])]))
+
+print(serialPort.readline())
 
 serialPort.close
