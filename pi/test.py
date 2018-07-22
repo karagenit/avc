@@ -3,17 +3,13 @@
 import serial
 
 # TODO: port may change
-serialPort = serial.Serial("/dev/ttyACM0", 115200);
+serialPort = serial.Serial("/dev/ttyUSB0", 115200);
 
 while True:
     print("Enter motor values:")
-    value = chr(input("A: "))
-    serialPort.write(value)
-    value = chr(input("B: "))
-    serialPort.write(value)
-    value = chr(input("C: "))
-    serialPort.write(value)
-    value = chr(input("D: "))
-    serialPort.write(value)
+    serialPort.write(bytearray([int(input("Motor A: "))]))
+    serialPort.write(bytearray([int(input("Motor B: "))]))
+    serialPort.write(bytearray([int(input("Motor C: "))]))
+    serialPort.write(bytearray([int(input("Motor D: "))]))
 
 serialPort.close
